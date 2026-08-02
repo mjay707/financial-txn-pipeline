@@ -1,4 +1,5 @@
 import logging
+import os
 from airflow.decorators import dag, task
 from airflow.operators.bash import BashOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
@@ -59,7 +60,45 @@ def financial_txn_pipeline():
         logger.info("File found. Size: %.2f KB", file_size / 1024)
         return file_path
 
+    @task
+    def bronze_load(file_path, **context):
+        # Task 2 work here
+        logger.info("Starting bronze load for file: %s", file_path)
+
+        if not os.path.exists(file_path):
+            logger.error("Source file does not exist: %s", file_path)
+            raise FileNotFoundError(f"Source file does not exist: {file_path}")
+
+        exec_date = context['execution_date']
+        s3_key = (
+            f"{S3_BRONZE_PREFIX}/"
+            f"year={exec_date.strftime('%Y')}/"
+            f"month={exec_date.strftime('%m')}/"
+            f"day={exec_date.strftime('%d')}/"
+            f"hour={exec_date.strftime('%H')}/"
+            f"{os.path.basename(file_path)}"
+        )
+
+        hook = S3Hook(aws_conn_id='aws_default')
+        hook.load_file(
+            filename=file_path,
+            key=s3_key,
+            bucket_name=S3_BUCKET,
+            replace=True,
+        )
+
+        logger.info(
+            "File %s (%.2f KB) uploaded to s3://%s/%s",
+                file_path,
+            os.path.getsize(file_path) / 1024,
+            S3_BUCKET,
+            s3_key
+        )
+
+        return s3_key
+
     # ── dependencies ──
-    check_source_file()
+    path = check_source_file()
+    bronze_load(path)
 
 financial_txn_pipeline()
