@@ -97,8 +97,19 @@ def financial_txn_pipeline():
 
         return s3_key
 
+    silver_pyspark = BashOperator(
+        task_id='silver_pyspark',
+        bash_command=(
+            'spark-submit '
+            '/opt/airflow/pyspark/silver_transform.py '
+            '{{ ds }} '
+            '{{ execution_date.strftime("%H") }} '
+            '{{ ti.xcom_pull(task_ids="bronze_load") }}'
+        ),
+    )
+    
     # ── dependencies ──
     path = check_source_file()
-    bronze_load(path)
+    bronze_load(path) >> silver_pyspark
 
 financial_txn_pipeline()
