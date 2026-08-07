@@ -62,7 +62,7 @@ def financial_txn_pipeline():
 
     @task
     def bronze_load(file_path, **context):
-        # Task 2 work here
+        
         logger.info("Starting bronze load for file: %s", file_path)
 
         if not os.path.exists(file_path):
@@ -107,9 +107,36 @@ def financial_txn_pipeline():
             '{{ ti.xcom_pull(task_ids="bronze_load") }}'
         ),
     )
-    
+
+    @task
+    def validate_counts(**context):
+        logger.info("Validating count of records in the silver layer.")
+
+        exec_date = context['execution_date']
+
+        s3_prefix = (
+                f"{S3_SILVER_PREFIX}/"
+                f"year={exec_date.strftime('%Y')}/"
+                f"month={exec_date.strftime('%m')}/"
+                f"day={exec_date.strftime('%d')}/"
+                f"hour={exec_date.strftime('%H')}/"
+            )
+
+        hook = S3Hook(aws_conn_id='aws_default')
+        keys = hook.list_keys(
+            bucket_name=S3_BUCKET,
+            prefix=s3_prefix
+        )
+
+        if not keys:
+            logger.error("No files found in silver layer for prefix: %s", s3_prefix)
+            raise ValueError(f"No files found in silver layer for prefix: {s3_prefix}")
+        else:
+            logger.info("Found %d files in silver layer for prefix: %s", len(keys), s3_prefix)
+            return len(keys)
+        
     # ── dependencies ──
     path = check_source_file()
-    bronze_load(path) >> silver_pyspark
+    bronze_load(path) >> silver_pyspark >> validate_counts()
 
 financial_txn_pipeline()
