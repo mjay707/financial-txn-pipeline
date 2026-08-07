@@ -145,9 +145,19 @@ def financial_txn_pipeline():
         f'--profiles-dir {DBT_PROFILES_DIR}'
         ),
     )
+
+    dbt_tests = BashOperator(
+            task_id='dbt_tests',
+            bash_command=(
+            f'cd {DBT_PROJECT_DIR} && '
+            f'dbt test '
+            f'--project-dir {DBT_PROJECT_DIR} '
+            f'--profiles-dir {DBT_PROFILES_DIR}'
+            ),
+        )
         
     # ── dependencies ──
     path = check_source_file()
-    bronze_load(path) >> silver_pyspark >> validate_counts() >> dbt_gold_models
+    bronze_load(path) >> silver_pyspark >> validate_counts() >> dbt_gold_models >> dbt_tests
 
 financial_txn_pipeline()
