@@ -155,7 +155,16 @@ def financial_txn_pipeline():
             f'--profiles-dir {DBT_PROFILES_DIR}'
             ),
         )
-        
+
+    @task
+    def notify(**context):
+        logger.info(
+        "Pipeline completed successfully. "
+        "Date: %s | Hour: %s | "
+        "Bronze → Silver → Gold complete. dbt tests passed.",
+        context['ds'],
+        context['execution_date'].strftime('%H')
+        )
     # ── dependencies ──
     path = check_source_file()
     bronze_load(path) >> silver_pyspark >> validate_counts() >> dbt_gold_models >> dbt_tests
