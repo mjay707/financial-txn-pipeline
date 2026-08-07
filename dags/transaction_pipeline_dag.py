@@ -11,6 +11,7 @@ from config.config import (
     DAG_START_DATE,
     DAG_SCHEDULE,
     DAG_CATCHUP,
+    DBT_PROFILES_DIR,
     SOURCE_FOLDER,
     FILE_NAME_PATTERN,
     S3_BUCKET,
@@ -134,9 +135,19 @@ def financial_txn_pipeline():
         else:
             logger.info("Found %d files in silver layer for prefix: %s", len(keys), s3_prefix)
             return len(keys)
+
+    dbt_gold_models = BashOperator(
+        task_id='dbt_gold_models',
+        bash_command=(
+        f'cd {DBT_PROJECT_DIR} && '
+        f'dbt run '
+        f'--project-dir {DBT_PROJECT_DIR} '
+        f'--profiles-dir {DBT_PROFILES_DIR}'
+        ),
+    )
         
     # ── dependencies ──
     path = check_source_file()
-    bronze_load(path) >> silver_pyspark >> validate_counts()
+    bronze_load(path) >> silver_pyspark >> validate_counts() >> dbt_gold_models
 
 financial_txn_pipeline()
