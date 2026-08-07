@@ -16,6 +16,8 @@ from config.config import (
     FILE_NAME_PATTERN,
     S3_BUCKET,
     S3_BRONZE_PREFIX,
+    DBT_PROJECT_DIR,
+    S3_SILVER_PREFIX
 )
 
 logger = logging.getLogger(__name__)
@@ -40,8 +42,6 @@ def financial_txn_pipeline():
 
     @task
     def check_source_file(**context):
-        import os
-
         hour = context['execution_date'].strftime('%H')
         date = context['execution_date'].strftime('%Y_%m_%d')
         file_name = FILE_NAME_PATTERN.format(date=date, hour=hour)
@@ -167,6 +167,7 @@ def financial_txn_pipeline():
         )
     # ── dependencies ──
     path = check_source_file()
-    bronze_load(path) >> silver_pyspark >> validate_counts() >> dbt_gold_models >> dbt_tests
+    s3_key = bronze_load(path)
+    s3_key >> silver_pyspark >> validate_counts() >> dbt_gold_models >> dbt_tests >> notify()
 
 financial_txn_pipeline()
