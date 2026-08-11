@@ -19,3 +19,4 @@ airflow.cfg
 airflow.db
 webserver_config.py
 logs/
+.env

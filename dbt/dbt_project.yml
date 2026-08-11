@@ -1,0 +1,16 @@
+name: 'financial_txn'
+version: '1.0.0'
+config-version: 2
+
+profile: 'financial_txn'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+models:
+  financial_txn:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

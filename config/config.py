@@ -27,7 +27,7 @@ FILE_NAME_PATTERN = "transactions_{date}_{hour}.csv"
 
 # ── AWS Settings ───────────────────────────────────
 AWS_REGION = "ca-central-1"
-REDSHIFT_DATABASE = "financial_txn"
+REDSHIFT_DATABASE = "dev"
 REDSHIFT_SCHEMA = "public"
 
 # ── dbt Settings ───────────────────────────────────
