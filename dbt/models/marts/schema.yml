@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: fct_transactions_hourly
+    columns:
+      - name: transaction_hour
+        tests:
+          - not_null
+          - unique
+      - name: total_transactions
+        tests:
+          - not_null
+      - name: total_amount
+        tests:
+          - not_null
+
+  - name: fct_transactions_daily
+    columns:
+      - name: transaction_date
+        tests:
+          - not_null
+      - name: total_amount
+        tests:
+          - not_null
+
+  - name: fct_executive_kpi_daily
+    columns:
+      - name: kpi_date
+        tests:
+          - not_null
+      - name: region
+        tests:
+          - not_null
+
+  - name: dim_customers
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_branches
+    columns:
+      - name: branch_id
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_date
+    columns:
+      - name: date_day
+        tests:
+          - not_null
+          - unique

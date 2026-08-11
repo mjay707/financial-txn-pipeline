@@ -1,0 +1,42 @@
+version: 2
+
+sources:
+  - name: silver
+    database: dev
+    schema: public
+    tables:
+      - name: transactions
+        loaded_at_field: received_time
+        freshness:
+          warn_after: {count: 2, period: hour}
+          error_after: {count: 4, period: hour}
+
+models:
+  - name: stg_transactions
+    columns:
+      - name: transaction_id
+        tests:
+          - not_null
+          - unique
+      - name: amount
+        tests:
+          - not_null
+      - name: record_status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['NORMAL', 'LATE', 'DEAD_LETTER']
+
+  - name: stg_customers
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+
+  - name: stg_branches
+    columns:
+      - name: branch_id
+        tests:
+          - not_null
+          - unique
